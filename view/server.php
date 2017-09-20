@@ -32,6 +32,11 @@ $server->register("ListaOpcionesRol",
 array('rol_id' => 'xsd:string'),
 array('respuesta' => 'xsd:string'), $ns);
 
+//	Lista de opciones
+$server->register("ListarModuloOpcion",
+array(),
+array('respuesta' => 'xsd:string'), $ns);
+
 $server->register("getOpciones",
 array(),
 array('respuesta' => 'xsd:string'), $ns);

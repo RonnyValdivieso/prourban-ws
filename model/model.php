@@ -412,6 +412,42 @@ function Autenticacion($usuario, $clave) {
 			}
 			return json_encode($respuesta);
 		}
+
+		//  Devuelve lista de opciones
+		function ListarModuloOpcion() {
+	
+			$sql = "SELECT * FROM modulo";
+			$db = new conexion();
+			$result = $db->consulta($sql);
+			$num = $db->encontradas($result);
+			$respuesta->datos_modulo = [];
+			$respuesta->datos_opcion = [];
+			$respuesta->mensaje = "";
+			$respuesta->codigo = "";
+			if ($num != 0) {
+				for ($i=0; $i < $num; $i++) {
+					$respuesta->datos_modulo[] = mysql_fetch_array($result);
+				}
+		
+				$sql = "SELECT * FROM opcion";
+				$db = new conexion();
+				$result = $db->consulta($sql);
+				$num = $db->encontradas($result);
+		
+				if ($num != 0) {
+					for ($i=0; $i < $num; $i++) {
+						$respuesta->datos_opcion[] = mysql_fetch_array($result);
+					}
+				}
+		
+				$respuesta->mensaje = "Ok";
+				$respuesta->codigo = 1;
+			} else {
+				$respuesta->mensaje = "No existen modulos.";
+				$respuesta->codigo = 0;
+			}
+			return json_encode($respuesta);
+		}
 	
 		//  inserta nuevo rol
 		function AsignarOpciones($id,$rol_id,$opcion_id,$estado) {
