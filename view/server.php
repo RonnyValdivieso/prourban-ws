@@ -59,6 +59,11 @@ $server->register("EliminarRol",
 array('id' => 'xsd:string'),
 array('respuesta' => 'xsd:string'), $ns);
 
+//	Activar rol
+$server->register("ActivarRol",
+array('id' => 'xsd:string'),
+array('respuesta' => 'xsd:string'), $ns);
+
 //	Lista de Rol
 $server->register("ListaRol",
 array(),
