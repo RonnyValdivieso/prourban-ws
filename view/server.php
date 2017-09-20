@@ -416,7 +416,7 @@ $server->register("ListaConceptopagose",
 			array('respuesta' => 'xsd:string'), $ns);
 
 $server->register("InsertarConceptopago",
-			array('descripcion' => 'xsd:string', 'estado' => 'xsd:string'),
+			array('descripcion' => 'xsd:string', 'valor' => 'xsd:string', 'estado' => 'xsd:string'),
 			array('respuesta' => 'xsd:string'), $ns);
 
 $server->register("BuscarConceptopago",
@@ -424,7 +424,8 @@ $server->register("BuscarConceptopago",
 			array('respuesta' => 'xsd:string'), $ns);
 
 $server->register("ModificarConceptopago",
-			array('id' => 'xsd:string', 'descripcion' => 'xsd:string', 'estado' => 'xsd:string'),
+			array('id' => 'xsd:string', 'descripcion' => 'xsd:string', 
+				'valor' => 'xsd:string', 'estado' => 'xsd:string'),
 			array('respuesta' => 'xsd:string'), $ns);
 //	Activa parámetros
 $server->register("ActivarConceptopago",

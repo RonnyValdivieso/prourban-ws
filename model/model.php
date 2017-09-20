@@ -2291,9 +2291,9 @@ function ListaConceptopagose() {
 
 	return json_encode($respuesta);
 }
-function InsertarConceptopago($descripcion, $estado) {
-	$sql = "INSERT INTO conceptopago (descripcion, estado)
-			VALUES ('$descripcion', '$estado')";
+function InsertarConceptopago($descripcion, $valor, $estado) {
+	$sql = "INSERT INTO conceptopago (descripcion, valor, estado)
+			VALUES ('$descripcion', 'valor', '$estado')";
 
 	$db = new conexion();
 	$result = $db->consulta($sql);
@@ -2370,9 +2370,9 @@ function BuscarConceptopago($id) {
 
 	return json_encode($respuesta);
 }
-function ModificarConceptopago($id, $descripcion, $estado) {
+function ModificarConceptopago($id, $descripcion, $valor, $estado) {
 
-	$sql = "UPDATE conceptopago SET descripcion = '$descripcion', estado = '$estado' WHERE conceptopago.id = $id";
+	$sql = "UPDATE conceptopago SET descripcion = '$descripcion', valor = '$valor', estado = '$estado' WHERE conceptopago.id = $id";
 
 	/*$file = fopen("prourban.log", "a");
 	fwrite($file, $sql);

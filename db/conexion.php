@@ -13,7 +13,7 @@ class Conexion {
         $this->nombrehost = "localhost"; // localhost:3306
         $this->usuario = "root"; //prourbanAMI //
         $this->contrasena = ""; //prourbanAMI //
-        $this->basedatos = "prourban"; //admoux_prourban //
+        $this->basedatos = "clservipublicom_prourban"; //admoux_prourban //
 
         $this->_enlace = mysql_connect($this->nombrehost, $this->usuario, $this->contrasena);
         if (!$this->_enlace) {
