@@ -842,7 +842,7 @@ function ListaCuentaxcobrar($nombrexBuscar) {
 				FROM cuentaxcobrar
 				INNER JOIN usuario ON usuario.id = cuentaxcobrar.usuario_id
 				INNER JOIN persona ON persona.id = usuario.persona_id
-				WHERE cuentaxcobrar.estado='pendiente'";
+				WHERE cuentaxcobrar.estado='PENDIENTE'";
 	}else {
 		$sql = "SELECT usuario.id, persona.primer_nombre, persona.primer_apellido, cuentaxcobrar.fecha_maxima_pago, cuentaxcobrar.estado
 				FROM cuentaxcobrar
@@ -1130,76 +1130,12 @@ function PagarCuenta($id) {
 	return json_encode($respuesta);
 }
 
-//---- RESERVA ----//
-
-function ListaPreReservas() {
-
-	//obtiene el id del usuario
-	$sql = "SELECT reserva.id, reserva.fecha_solicitud, reserva.fecha_reserva, concat(persona.primer_nombre, ' ', persona.primer_apellido) AS nombre,
-				   persona.cedula, area.descripcion
-			FROM reserva INNER JOIN usuario ON reserva.usuario_id = usuario.id
-			INNER JOIN persona on usuario.persona_id = persona.id
-			INNER JOIN area ON reserva.area_id = area.id
-			WHERE reserva.estado = 'Pre-reservado'";
-
-	$db = new conexion();
-	$result = $db->consulta($sql);
-	$num = $db->encontradas($result);
-
-	$respuesta->datos = [];
-	$respuesta->mensaje = "";
-	$respuesta->codigo = "";
-
-	if ($num != 0) {
-		for ($i=0; $i < $num; $i++) {
-			$respuesta->datos[] = mysql_fetch_array($result);
-		}
-
-		$respuesta->mensaje = "Ok";
-		$respuesta->codigo = 1;
-	} else {
-		$respuesta->mensaje = "No existen reservas pendientes!";
-		$respuesta->codigo = 0;
-	}
-
-	return json_encode($respuesta);
-}
-
-function BuscarPreReserva($id) {
-	$sql = "SELECT reserva.id, usuario.id, concat(persona.primer_nombre, ' ', persona.primer_apellido) AS nombre,
-				   persona.cedula, concat('Manzana ', inmueble.manzana, ', villa ', inmueble.numero_villa) AS direccion, area.descripcion
-			FROM reserva
-			INNER JOIN usuario ON usuario.id = reserva.usuario_id
-			INNER JOIN persona ON persona.id = usuario.persona_id
-			INNER JOIN area ON reserva.area_id = area.id
-			INNER JOIN parametro ON area.parametro_id = parametro.id
-			INNER JOIN inmueble ON usuario.id = inmueble.id 
-			WHERE reserva.id = $id";
-	$mensajeError = "No se encontró la reserva!";
-
-	return Consultar($sql, $mensajeError);
-}
-
-function PagarReserva($id) {
-	$sql = "UPDATE reserva SET estado = 'Reservado'
-			WHERE id = $id";
-
-	$mensajeError = "No se ha podido realizar el pago de la reserva";
-
-	$result = Procesar($sql, $mensajeError);
-
-	return $result;
-}
-
-
 //---- FACTURA ----//
 
 function CabeceraFactura($id) {
 
 	//obtiene el id de la cuentaXcobrar
-	$sql = "SELECT cuentaxcobrar.id, usuario.id, concat(persona.primer_nombre, ' ', persona.primer_apellido) AS nombre,
-				   persona.cedula, concat('Manzana ', inmueble.manzana, ', villa ', inmueble.numero_villa) AS direccion
-			FROM cuentaxcobrar
+	$sql = "SELECT cuentaxcobrar.id, usuario.id, concat(persona.primer_nombre, ' ', persona.primer_apellido) AS nombre, persona.cedula, concat('Manzana ', inmueble.manzana, ', villa ', inmueble.numero_villa) AS direccion FROM cuentaxcobrar
 			INNER JOIN usuario ON usuario.id = cuentaxcobrar.usuario_id
 			INNER JOIN persona ON persona.id = usuario.persona_id
 			INNER JOIN inmueble ON usuario.id = inmueble.id WHERE cuentaxcobrar.id = $id";
@@ -1290,7 +1226,7 @@ function ListaCabeceraFactura() {
 
 function PagarFactura($id) {
 
-	$sql = "UPDATE cuentaxcobrar SET estado = 'pagado'
+	$sql = "UPDATE cuentaxcobrar SET estado = 'PAGADO'
 			WHERE cuentaxcobrar.id = $id";
 
 	$db = new conexion();
@@ -1416,7 +1352,7 @@ function GuardarAsiento($fecha, $valor, $conceptoPago, $factura_id) {
 function GuardarAsientoProveedores($fecha, $valor, $conceptoPago, $numero_referencia, 
 									$cuentaxpagar_id) {
 
-$sql = "INSERT INTO asientocontable (descripcion, fecha, numero_referencia, debito, 
+	$sql = "INSERT INTO asientocontable (descripcion, fecha, numero_referencia, debito, 
 										 credito, diferencia, factura_id, cuentaxpagar_id, 
 										 debitocuenta, creditocuenta) 
 			VALUES ('$conceptoPago', '$fecha', '$numero_referencia', '$valor', '$valor', 
@@ -1671,10 +1607,7 @@ function ListaAreas() {
 
 function ListaAreasInactivas() {
 
-	//obtiene el id del usuario
-
     $sql = "SELECT * FROM `area` WHERE area.estado = 'INACTIVO'";
-    //$sql = "SELECT area.id, area.descripcion, area.valor, area.estado WHERE area.estado = 'Activo'";
 
 	$db = new conexion();
 	$result = $db->consulta($sql);
@@ -1781,7 +1714,6 @@ function ModificarArea($id, $descripcion, $valor, $estado) {
 	return json_encode($respuesta);
 }
 function EliminarArea($id) {
-	//$sql = "DELETE FROM area WHERE id=$id";
     $sql = "UPDATE `area` SET `estado` = 'INACTIVO' WHERE `area`.`id` = '$id'";
 
 	$db = new conexion();
@@ -1809,7 +1741,6 @@ function EliminarArea($id) {
 }
 
 function CambiarEstadoArea($id) {
-	//$sql = "DELETE FROM area WHERE id=$id";
     $sql = "UPDATE `area` SET `estado` = 'ACTIVO' WHERE `area`.`id` = '$id'";
 
 	$db = new conexion();
@@ -1922,15 +1853,8 @@ function BuscarInmueble($id) {
 	return json_encode($respuesta);
 }
 function ModificarInmueble($id, $manzana, $numero_villa, $numero_pisos, $numero_cuartos, $numero_banios, $usuario_id) {
-
-   //  $sql = "UPDATE proveedor SET descripcion = '$descripcion', ruc = '$ruc' WHERE proveedor.id = $id";
-     $sql = "UPDATE `inmueble` SET `manzana` = '$manzana', `numero_villa` = '$numero_villa', `numero_pisos` = '$numero_pisos', `numero_cuartos` = '$numero_cuartos', `numero_banios` = '$numero_banios', `usuario_id` = '$usuario_id' WHERE `inmueble`.`id` = $id";
-        //$sql = "UPDATE inmueble SET manzana = '$manzana', numero_villa = '$numero_villa', numero_pisos = '$numero_pisos', numero_cuartos = '$numero_cuartos', numero_banios = '$numero_banios', usuario_id = '$usuario_id' WHERE inmueble.id = $id";
-
-	/*$file = fopen("prourban.log", "a");
-	fwrite($file, $sql);
-	fclose($file);*/
-
+	$sql = "UPDATE `inmueble` SET `manzana` = '$manzana', `numero_villa` = '$numero_villa', `numero_pisos` = '$numero_pisos', `numero_cuartos` = '$numero_cuartos', `numero_banios` = '$numero_banios', `usuario_id` = '$usuario_id' WHERE `inmueble`.`id` = $id";
+ 
 	$db = new conexion();
 	$result = $db->consulta($sql);
     $num = $db->encontradas($result);
@@ -2012,7 +1936,7 @@ function CambiarEstadoInmueble($id, $estado){
 function ListaHorariosmantenimiento() {
 
 	//$sql = "SELECT * FROM `horariomantenimiento` ";
-    $sql = "SELECT * FROM `horariomantenimiento` WHERE horariomantenimiento.estado = 'Activo'";
+    $sql = "SELECT * FROM `horariomantenimiento` WHERE horariomantenimiento.estado = 'ACTIVO'";
 
 	$db = new conexion();
 	$result = $db->consulta($sql);
@@ -2175,8 +2099,6 @@ function CambiarEstadoHorariosmantenimiento($id, $estado){
 //HORARIO ATENCIÓN
 //------------------------------------------------------------
 function ListaHorariosatencion() {
-
-	//obtiene el id del usuario
 	$sql = "SELECT * FROM `horarioatencion` ";
 
 	$db = new conexion();
@@ -3146,14 +3068,76 @@ function ActivarUsuario($id) {
 
 //Reservas Modulo
 
+//---- RESERVA ----//
+
+function ListaPreReservas() {
+
+	//obtiene el id del usuario
+	$sql = "SELECT reserva.id, reserva.fecha_solicitud, reserva.fecha_reserva, concat(persona.primer_nombre, ' ', persona.primer_apellido) AS nombre,
+				   persona.cedula, area.descripcion
+			FROM reserva INNER JOIN usuario ON reserva.usuario_id = usuario.id
+			INNER JOIN persona on usuario.persona_id = persona.id
+			INNER JOIN area ON reserva.area_id = area.id
+			WHERE reserva.estado = 'PRE-RESERVA'";
+
+	$db = new conexion();
+	$result = $db->consulta($sql);
+	$num = $db->encontradas($result);
+
+	$respuesta->datos = [];
+	$respuesta->mensaje = "";
+	$respuesta->codigo = "";
+
+	if ($num != 0) {
+		for ($i=0; $i < $num; $i++) {
+			$respuesta->datos[] = mysql_fetch_array($result);
+		}
+
+		$respuesta->mensaje = "Ok";
+		$respuesta->codigo = 1;
+	} else {
+		$respuesta->mensaje = "No existen reservas pendientes!";
+		$respuesta->codigo = 0;
+	}
+
+	return json_encode($respuesta);
+}
+
+function BuscarPreReserva($id) {
+	$sql = "SELECT reserva.id, usuario.id, concat(persona.primer_nombre, ' ', persona.primer_apellido) AS nombre,
+				   persona.cedula, concat('Manzana ', inmueble.manzana, ', villa ', inmueble.numero_villa) AS direccion, area.descripcion
+			FROM reserva
+			INNER JOIN usuario ON usuario.id = reserva.usuario_id
+			INNER JOIN persona ON persona.id = usuario.persona_id
+			INNER JOIN area ON reserva.area_id = area.id
+			INNER JOIN parametro ON area.parametro_id = parametro.id
+			INNER JOIN inmueble ON usuario.id = inmueble.id 
+			WHERE reserva.id = $id";
+	$mensajeError = "No se encontró la reserva!";
+
+	return Consultar($sql, $mensajeError);
+}
+
+function PagarReserva($id) {
+	$sql = "UPDATE reserva SET estado = 'RESERVADO'
+			WHERE id = $id";
+
+	$mensajeError = "No se ha podido realizar el pago de la reserva";
+
+	$result = Procesar($sql, $mensajeError);
+
+	return $result;
+}
+
+
 function listaReserva(){
     
   
     $sql = "SELECT usuario.id as id, reserva.id as id_reserva , concat(persona.primer_nombre, ' ', persona.primer_apellido) AS nombre,  reserva.fecha_reserva as fechaReserva , reserva.desde as desde , reserva.hasta as hasta , reserva.estado as estado ,area.descripcion as area 
-FROM reserva
-INNER JOIN usuario ON reserva.usuario_id = usuario.id  and reserva.estado = 'Pre-reserva'
-INNER JOIN area ON reserva.area_id = area.id 
-INNER JOIN persona ON usuario.persona_id = persona.id";
+	FROM reserva
+	INNER JOIN usuario ON reserva.usuario_id = usuario.id  and reserva.estado = 'PRE-RESERVA'
+	INNER JOIN area ON reserva.area_id = area.id 
+	INNER JOIN persona ON usuario.persona_id = persona.id";
     
     //SELECT usuario.nombre_usuario  FROM reserva INNER JOIN usuario ON reserva.usuario_id = usuario.id;
 
@@ -3184,9 +3168,7 @@ INNER JOIN persona ON usuario.persona_id = persona.id";
 }
 function estadoReserva($id){
      $sql = "SELECT reserva.id as id, reserva.fecha_reserva as fechareserva,  reserva.desde as desde , reserva.hasta as hasta , reserva.estado as estado ,area.descripcion as area FROM reserva INNER JOIN area ON reserva.area_id = area.id and reserva.estado = 'pre-reserva'  and reserva.usuario_id = '$id'";
-    
-    //SELECT usuario.nombre_usuario  FROM reserva INNER JOIN usuario ON reserva.usuario_id = usuario.id;
-
+   
 	$db = new conexion();
 	$result = $db->consulta($sql);
 	$num = $db->encontradas($result);
@@ -3218,10 +3200,10 @@ function listaReservaAceptada(){
     
   
     $sql = "SELECT usuario.id as id, reserva.id as id_reserva , concat(persona.primer_nombre, ' ', persona.primer_apellido) AS nombre,  reserva.fecha_reserva as fechaReserva , reserva.desde as desde , reserva.hasta as hasta , reserva.estado as estado ,area.descripcion as area 
-FROM reserva
-INNER JOIN usuario ON reserva.usuario_id = usuario.id  and reserva.estado = 'aceptada'
-INNER JOIN area ON reserva.area_id = area.id 
-INNER JOIN persona ON usuario.persona_id = persona.id";
+	FROM reserva
+	INNER JOIN usuario ON reserva.usuario_id = usuario.id  and reserva.estado = 'ACEPTADA'
+	INNER JOIN area ON reserva.area_id = area.id 
+	INNER JOIN persona ON usuario.persona_id = persona.id";
     
 
 	$db = new conexion();
@@ -3304,11 +3286,8 @@ function listarAreasAdmin(){
     
 }
 
-
-
-
 function CancelarPreReserva($id){
-    $sql = "Update reserva Set estado='Libre' Where id='$id' ";
+    $sql = "Update reserva Set estado='LIBRE' Where id='$id' ";
 
 	$db = new conexion();
 	$result = $db->consulta($sql);
@@ -3335,10 +3314,6 @@ function CancelarPreReserva($id){
     
 }
 
-
-/*function insertarReserva($fecha, $desde, $hasta , $estado, $area ) {
-	$sql = "INSERT INTO reserva (fecha_solicitud, start, desde, hasta, estado, usuario_id, area_id) 
-			VALUES (CURDATE(), '$fecha', '$desde' ,'$hasta' ,'$estado' , '1' ,'$area')";*/
 function insertarReserva($fecha, $desde, $hasta , $area, $id ) {
 	$sql = "INSERT INTO reserva (fecha_solicitud, fecha_reserva, desde, hasta, estado, usuario_id, area_id) 
 			VALUES (CURDATE(), '$fecha', '$desde' ,'$hasta' ,'pre-reserva' , '$id' ,'$area')";    
@@ -3392,12 +3367,8 @@ function insertarHoraMantenimiento($fecha_inicio, $fecha_fin, $desde, $hasta , $
 }
 
 function eliminacionAutomatica($valor){
-   /* CREATE EVENT limpieza
-    ON SCHEDULE AT CURRENT_TIMESTAMP + INTERVAL 1 DAY
-    DO
-      TRUNCATE TABLE esquema.tabla;*/
-   // $sql = "CREATE EVENT limpieza ON SCHEDULE AT CURRENT_TIMESTAMP + INTERVAL 24 HOUR  DO DELETE FROM  reserva where estado = 'pre-reserva'";
-           $sql =   "ALTER EVENT limpieza ON SCHEDULE EVERY '$valor' HOUR";
+ 
+    $sql =   "ALTER EVENT limpieza ON SCHEDULE EVERY '$valor' HOUR";
     
     
 
@@ -3425,8 +3396,6 @@ function eliminacionAutomatica($valor){
 }
 
 function guardarHora($valor){
-   /* $sql = "INSERT INTO impuesto (descripcion, valor) 
-			VALUES ('tiempo', '$valor')";*/
     $sql = " UPDATE parametro
 SET valor='$valor'
 WHERE descripcion='Reserva'";
