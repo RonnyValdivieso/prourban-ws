@@ -818,7 +818,7 @@ function ListaCuentasxpagar() {
 	$sql = "SELECT a.id, a.descripcion, a.fecha, a.total, b.descripcion AS nombre_proveedor
 			FROM cuentaxpagar a
 			INNER JOIN proveedor b ON a.proveedor_id = b.id
-			WHERE a.estado = 'ACTIVO'";
+			WHERE a.estado = 'PENDIENTE'";
 
 
 	$db = new conexion();

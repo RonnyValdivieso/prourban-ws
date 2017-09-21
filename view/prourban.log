@@ -1,1 +1,1 @@
-No se ha podido realizar el pago de la reservaUPDATE rol SET descripcion = 'SISTEMAS' WHERE id = 5UPDATE rol SET descripcion = 'SISTEMAS2' WHERE id = 1UPDATE rol SET descripcion = 'SISTEMAS' WHERE id = 1
+No se ha podido realizar el pago de la reservaUPDATE rol SET descripcion = 'SISTEMAS' WHERE id = 5UPDATE rol SET descripcion = 'SISTEMAS2' WHERE id = 1UPDATE rol SET descripcion = 'SISTEMAS' WHERE id = 1UPDATE rol SET descripcion = 'Nuevo rooool' WHERE id = 5UPDATE usuario SET nombre_usuario = 'diascoel', clave = '1234', persona_id = '4',rol_id = '2' WHERE id = 6
