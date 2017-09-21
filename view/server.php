@@ -15,14 +15,9 @@ $ns = $_SERVER["DOCUMENT_ROOT"] . "/prourban-ws/view/server.php";
 $server->configurewsdl('ProurbanWSDL', $ns);
 
 //Seguridad---------------------------------------------
-
-//	Obtiene un usuario
 $server->register("Autenticacion",
 array('usuario' => 'xsd:string', 'clave' => 'xsd:string'),
 array('respuesta' => 'xsd:string'), $ns);
-
-//	Lista de usuarios recibe usuario y contraseña para validar logueo
-
 //	Lista de opciones
 $server->register("ListaOpciones",
 array('rol_id' => 'xsd:string'),
@@ -30,6 +25,11 @@ array('respuesta' => 'xsd:string'), $ns);
 
 $server->register("ListaOpcionesRol",
 array('rol_id' => 'xsd:string'),
+array('respuesta' => 'xsd:string'), $ns);
+
+//	Lista de opciones
+$server->register("ListarModuloOpcion",
+array(),
 array('respuesta' => 'xsd:string'), $ns);
 
 $server->register("getOpciones",
@@ -98,10 +98,17 @@ array(),
 array('respuesta' => 'xsd:string'), $ns);
 
 //Seguridad---------------------------------------------
+$server->register("CargaMenu",
+			array('usuario_id' => 'xsd:string'),
+			array('respuesta' => 'xsd:string'), $ns);
 
 
 //	PROVEEDOR
 $server->register("ListaProveedores",
+			array(),
+			array('respuesta' => 'xsd:string'), $ns);
+
+$server->register("ListaProveedoresInactivos",
 			array(),
 			array('respuesta' => 'xsd:string'), $ns);
 
@@ -121,9 +128,16 @@ $server->register("BuscarProveedor",
 			array('id' => 'xsd:string'),
 			array('respuesta' => 'xsd:string'), $ns);
 
+$server->register("ActivarProveedor",
+			array('id' => 'xsd:string'),
+			array('respuesta' => 'xsd:string'), $ns);
 
 //	CUENTAXPAGAR
 $server->register("ListaCuentasxpagar",
+			array(),
+			array('respuesta' => 'xsd:string'), $ns);
+
+$server->register("ListaCuentasxpagarInactivas",
 			array(),
 			array('respuesta' => 'xsd:string'), $ns);
 
@@ -144,6 +158,14 @@ $server->register("ModificarCuentaxpagar",
 			array('respuesta' => 'xsd:string'), $ns);
 
 $server->register("EliminarCuentaxpagar",
+			array('id' => 'xsd:string'),
+			array('respuesta' => 'xsd:string'), $ns);
+
+$server->register("ActivarCuentaxpagar",
+			array('id' => 'xsd:string'),
+			array('respuesta' => 'xsd:string'), $ns);
+
+$server->register("PagarCuenta",
 			array('id' => 'xsd:string'),
 			array('respuesta' => 'xsd:string'), $ns);
 
@@ -191,6 +213,9 @@ $server->register("GuardarAsiento",
 			array('fecha' => 'xsd:string', 'valor' => 'xsd:string', 'conceptoPago' => 'xsd:string', 'factura_id' => 'xsd:string'),
 			array('respuesta' => 'xsd:string'), $ns);
 
+$server->register("GuardarAsientoProveedores",
+			array('fecha' => 'xsd:string', 'valor' => 'xsd:string', 'conceptoPago' => 'xsd:string', 'numero_referencia' => 'xsd:string', 'cuentaxpagar_id' => 'xsd:string'),
+			array('respuesta' => 'xsd:string'), $ns);
 //	RESERVA
 $server->register("ListaPreReservas",
 			array(),
@@ -209,12 +234,27 @@ $server->register("ListaCuentas",
 			array(),
 			array('respuesta' => 'xsd:string'), $ns);
 
+$server->register("ListaCuentasActivo",
+			array(),
+			array('respuesta' => 'xsd:string'), $ns);
+
+$server->register("ListaCuentasPasivo",
+			array(),
+			array('respuesta' => 'xsd:string'), $ns);
 $server->register("ListaAsientoDebito",
 			array(),
 			array('respuesta' => 'xsd:string'), $ns);
 
 $server->register("ListaAsientoCredito",
 			array(),
+			array('respuesta' => 'xsd:string'), $ns);
+
+$server->register("InsertarAsiento",
+			array('descripcion' => 'xsd:string', 'fecha' => 'xsd:string',
+				  'numero_referencia' => 'xsd:string', 'debito' => 'xsd:string', 
+				  'credito' => 'xsd:string', 'difernecia' => 'xsd:string',
+				  'factura_id' => 'xsd:string', 'cuentaxpaga_id' => 'xsd:string',
+					'debitocuenta' => 'xsd:string', 'creditocuenta' => 'xsd:string',),
 			array('respuesta' => 'xsd:string'), $ns);
 
 //Andres
@@ -411,7 +451,7 @@ $server->register("ListaConceptopagose",
 			array('respuesta' => 'xsd:string'), $ns);
 
 $server->register("InsertarConceptopago",
-			array('descripcion' => 'xsd:string', 'estado' => 'xsd:string'),
+			array('descripcion' => 'xsd:string', 'valor' => 'xsd:string', 'estado' => 'xsd:string'),
 			array('respuesta' => 'xsd:string'), $ns);
 
 $server->register("BuscarConceptopago",
@@ -419,7 +459,8 @@ $server->register("BuscarConceptopago",
 			array('respuesta' => 'xsd:string'), $ns);
 
 $server->register("ModificarConceptopago",
-			array('id' => 'xsd:string', 'descripcion' => 'xsd:string', 'estado' => 'xsd:string'),
+			array('id' => 'xsd:string', 'descripcion' => 'xsd:string', 
+				'valor' => 'xsd:string', 'estado' => 'xsd:string'),
 			array('respuesta' => 'xsd:string'), $ns);
 //	Activa parámetros
 $server->register("ActivarConceptopago",
@@ -469,6 +510,59 @@ $server->register("CambiarEstadoFormapago",
 			array('respuesta' => 'xsd:string'), $ns);
 
 //FIN PARTE DE LORENA
+
+/*********************** Modulo Reserva ****************/
+//	Lista de Reservas Admin
+$server->register("listaReserva",
+			array(),
+			array('respuesta' => 'xsd:string'), $ns);
+
+$server->register("estadoReserva",
+			array('id' => 'xsd:string'),
+			array('respuesta' => 'xsd:string'), $ns);
+
+$server->register("listarAreas",
+			array(),
+			array('respuesta' => 'xsd:string'), $ns);
+
+$server->register("listarAreasAdmin",
+			array(),
+			array('respuesta' => 'xsd:string'), $ns);
+
+
+$server->register("listaReservaAceptada",
+			array(),
+			array('respuesta' => 'xsd:string'), $ns);
+
+
+$server->register("CancelarPreReserva",
+			array('id' => 'xsd:string'),
+			array('respuesta' => 'xsd:string'), $ns);
+
+
+$server->register("insertarReserva",
+			array('fecha' => 'xsd:string', ' desde' => 'xsd:string', 'hasta' => 'xsd:string', 'area' => 'xsd:string','id' => 'xsd:string' ),
+			array('respuesta' => 'xsd:string'), $ns);
+
+
+
+$server->register("insertarHoraMantenimiento",
+			array('fecha_inicio' => 'xsd:string','fecha_fin' => 'xsd:string', ' desde' => 'xsd:string', 'hasta' => 'xsd:string','area' => 'xsd:string' ),
+			array('respuesta' => 'xsd:string'), $ns);
+
+
+
+$server->register("eliminacionAutomatica",
+			array('valor' => 'xsd:string'),
+			array('respuesta' => 'xsd:string'), $ns);
+
+
+    $server->register("guardarHora",
+			array($valor),
+			array('respuesta' => 'xsd:string'), $ns);
+
+
+/*********************** Fin Modulo Reserva ****************/
 
 $HTTP_RAW_POST_DATA = isset($HTTP_RAW_POST_DATA) ? $HTTP_RAW_POST_DATA : '';
 $server->service($HTTP_RAW_POST_DATA);

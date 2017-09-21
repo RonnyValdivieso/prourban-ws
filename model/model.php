@@ -412,6 +412,42 @@ function Autenticacion($usuario, $clave) {
 			}
 			return json_encode($respuesta);
 		}
+
+		//  Devuelve lista de opciones
+		function ListarModuloOpcion() {
+	
+			$sql = "SELECT * FROM modulo";
+			$db = new conexion();
+			$result = $db->consulta($sql);
+			$num = $db->encontradas($result);
+			$respuesta->datos_modulo = [];
+			$respuesta->datos_opcion = [];
+			$respuesta->mensaje = "";
+			$respuesta->codigo = "";
+			if ($num != 0) {
+				for ($i=0; $i < $num; $i++) {
+					$respuesta->datos_modulo[] = mysql_fetch_array($result);
+				}
+		
+				$sql = "SELECT * FROM opcion";
+				$db = new conexion();
+				$result = $db->consulta($sql);
+				$num = $db->encontradas($result);
+		
+				if ($num != 0) {
+					for ($i=0; $i < $num; $i++) {
+						$respuesta->datos_opcion[] = mysql_fetch_array($result);
+					}
+				}
+		
+				$respuesta->mensaje = "Ok";
+				$respuesta->codigo = 1;
+			} else {
+				$respuesta->mensaje = "No existen modulos.";
+				$respuesta->codigo = 0;
+			}
+			return json_encode($respuesta);
+		}
 	
 		//  inserta nuevo rol
 		function AsignarOpciones($id,$rol_id,$opcion_id,$estado) {
@@ -604,7 +640,36 @@ function Autenticacion($usuario, $clave) {
 function ListaProveedores() {
 
 	//obtiene el id del usuario
-	$sql = "SELECT * FROM proveedor";
+	$sql = "SELECT * FROM proveedor WHERE estado = 'ACTIVO'";
+$db = new conexion();
+	$result = $db->consulta($sql);
+	$num = $db->encontradas($result);
+
+	$respuesta->datos = [];
+	$respuesta->mensaje = "";
+	$respuesta->codigo = "";
+
+	if ($num != 0) {
+
+		for ($i=0; $i < $num; $i++) {
+			$respuesta->datos[] = mysql_fetch_array($result);
+		}
+
+		$respuesta->mensaje = "Ok";
+		$respuesta->codigo = 1;
+	} else {
+		$respuesta->mensaje = "No existen registros de proveedores!";
+		$respuesta->codigo = 0;
+	}
+
+	return json_encode($respuesta);
+}
+
+//	Devuelve lista de proveedores con estado INACTIVO
+function ListaProveedoresInactivos() {
+
+	//obtiene el id del usuario
+	$sql = "SELECT * FROM proveedor WHERE estado = 'INACTIVO'";
 
 	$db = new conexion();
 	$result = $db->consulta($sql);
@@ -658,34 +723,6 @@ function InsertarProveedor($descripcion, $ruc) {
 	return json_encode($respuesta);
 }
 
-function BuscarProveedor($id) {
-
-	$sql = "SELECT * FROM proveedor WHERE id = $id";
-
-	$db = new conexion();
-	$result = $db->consulta($sql);
-	$num = $db->encontradas($result);
-
-	$respuesta->datos = [];
-	$respuesta->mensaje = "";
-	$respuesta->codigo = "";
-
-	if ($num != 0) {
-
-		for ($i=0; $i < $num; $i++) {
-			$respuesta->datos[] = mysql_fetch_array($result);
-		}
-
-		$respuesta->mensaje = "Ok";
-		$respuesta->codigo = 1;
-	} else {
-		$respuesta->mensaje = "Ha ocurrido un error!";
-		$respuesta->codigo = 0;
-	}
-
-	return json_encode($respuesta);
-}
-
 function ModificarProveedor($id, $descripcion, $ruc) {
 
 	$sql = "UPDATE proveedor SET descripcion = '$descripcion', ruc = '$ruc' WHERE proveedor.id = $id";
@@ -714,7 +751,8 @@ function ModificarProveedor($id, $descripcion, $ruc) {
 }
 
 function EliminarProveedor($id) {
-	$sql = "DELETE FROM proveedor WHERE id=$id";
+	$sql = "UPDATE proveedor SET estado = 'INACTIVO' 
+			WHERE id = $id";
 
 	$db = new conexion();
 	$result = $db->consulta($sql);
@@ -733,6 +771,62 @@ function EliminarProveedor($id) {
 		$respuesta->codigo = 1;
 	} else {
 		$respuesta->mensaje = "Ha ocurrido un error!";
+		$respuesta->codigo = 0;
+	}
+
+	return json_encode($respuesta);
+}
+
+function BuscarProveedor($id) {
+
+	$sql = "SELECT * FROM proveedor WHERE id = $id";
+
+	$db = new conexion();
+	$result = $db->consulta($sql);
+	$num = $db->encontradas($result);
+
+	$respuesta->datos = [];
+	$respuesta->mensaje = "";
+	$respuesta->codigo = "";
+
+	if ($num != 0) {
+
+		for ($i=0; $i < $num; $i++) {
+			$respuesta->datos[] = mysql_fetch_array($result);
+		}
+
+		$respuesta->mensaje = "Ok";
+		$respuesta->codigo = 1;
+	} else {
+		$respuesta->mensaje = "Ha ocurrido un error!";
+ 		$respuesta->codigo = 0;
+	}
+
+	return json_encode($respuesta);
+}
+
+function ActivarProveedor($id) {
+
+	$sql = "UPDATE proveedor SET estado = 'ACTIVO' 
+			WHERE id = $id";
+
+	$db = new conexion();
+	$result = $db->consulta($sql);
+
+	$respuesta->datos = [];
+	$respuesta->mensaje = "";
+	$respuesta->codigo = "";
+
+	if ($result) {
+
+		for ($i=0; $i < $num; $i++) {
+			$respuesta->datos[] = mysql_fetch_array($result);
+		}
+
+		$respuesta->mensaje = "Registro activado!";
+		$respuesta->codigo = 1;
+	} else {
+		$respuesta->mensaje = "Datos invalidos!";
 		$respuesta->codigo = 0;
 	}
 
@@ -812,14 +906,39 @@ function BuscarCuentaxcobrar($id) {
 //---- CUENTAXPAGAR ----//
 
 function ListaCuentasxpagar() {
+	$sql = "SELECT a.id, a.descripcion, a.fecha, a.total, a.numero_referencia, b.descripcion AS nombre_proveedor 
+			FROM cuentaxpagar a 
+			INNER JOIN proveedor b ON a.proveedor_id = b.id
+			WHERE a.estado = 'PENDIENTE'";
 
+	$db = new conexion();
+	$result = $db->consulta($sql);
+	$num = $db->encontradas($result);
+
+	$respuesta->datos = [];
+	$respuesta->mensaje = "";
+	$respuesta->codigo = "";
+	if ($num != 0) {
+		for ($i=0; $i < $num; $i++) {
+			$respuesta->datos[] = mysql_fetch_array($result);
+		}
+
+		$respuesta->mensaje = "Ok";
+		$respuesta->codigo = 1;
+	} else {
+		$respuesta->mensaje = "No existen registros de cuentas por pagar!";
+		$respuesta->codigo = 0;
+	}
+
+	return json_encode($respuesta);
+}
+function ListaCuentasxpagarInactivas() {
 	//obtiene el id del usuario
 
 	$sql = "SELECT a.id, a.descripcion, a.fecha, a.total, b.descripcion AS nombre_proveedor
 			FROM cuentaxpagar a
 			INNER JOIN proveedor b ON a.proveedor_id = b.id
-			WHERE a.estado = 'PENDIENTE'";
-
+			WHERE a.estado = 'PAGADO'";
 
 	$db = new conexion();
 	$result = $db->consulta($sql);
@@ -874,11 +993,11 @@ function BuscarCuentaxpagar($id) {
 	return json_encode($respuesta);
 }
 
-function ModificarCuentaxpagar($id, $descripcion, $fecha, $total, $numero_referencia, $proveedor_id) {
+function InsertarCuentaxpagar($descripcion, $fecha, $total, $numero_referencia, $proveedor_id) {
 
-	$sql = "UPDATE cuentaxpagar SET descripcion = '$descripcion', fecha = '$fecha', total = '$total',
-				numero_referencia = '$numero_referencia', proveedor_id = '$proveedor_id'
-			WHERE cuentaxpagar.id = $id";
+	$sql = "INSERT INTO cuentaxpagar (descripcion, fecha, total, numero_referencia, proveedor_id)
+			VALUES ('$descripcion', '$fecha', '$total', '$numero_referencia', '$proveedor_id')";
+
 
 	$db = new conexion();
 	$result = $db->consulta($sql);
@@ -903,10 +1022,11 @@ function ModificarCuentaxpagar($id, $descripcion, $fecha, $total, $numero_refere
 	return json_encode($respuesta);
 }
 
-function InsertarCuentaxpagar($descripcion, $fecha, $total, $numero_referencia, $proveedor_id) {
+function ModificarCuentaxpagar($id, $descripcion, $fecha, $total, $numero_referencia, $proveedor_id) {
 
-	$sql = "INSERT INTO cuentaxpagar (descripcion, fecha, total, numero_referencia, proveedor_id)
-			VALUES ('$descripcion', '$fecha', '$total', '$numero_referencia', '$proveedor_id')";
+	$sql = "UPDATE cuentaxpagar SET descripcion = '$descripcion', fecha = '$fecha', total = '$total',
+				numero_referencia = '$numero_referencia', proveedor_id = '$proveedor_id'
+			WHERE cuentaxpagar.id = $id";
 
 	$db = new conexion();
 	$result = $db->consulta($sql);
@@ -957,6 +1077,58 @@ function EliminarCuentaxpagar($id) {
 	return json_encode($respuesta);
 }
 
+function ActivarCuentaxpagar($id) {
+	$sql = "UPDATE cuentaxpagar SET estado = 'ACTIVO' WHERE id = $id";
+
+	$db = new conexion();
+	$result = $db->consulta($sql);
+
+	$respuesta->datos = [];
+	$respuesta->mensaje = "";
+	$respuesta->codigo = "";
+
+	if ($result) {
+
+		for ($i=0; $i < $num; $i++) {
+			$respuesta->datos[] = mysql_fetch_array($result);
+		}
+
+		$respuesta->mensaje = "Registro activado con éxito!";
+		$respuesta->codigo = 1;
+	} else {
+		$respuesta->mensaje = "Ha ocurrido un error!";
+		$respuesta->codigo = 0;
+	}
+
+	return json_encode($respuesta);
+}
+
+function PagarCuenta($id) {
+
+	$sql = "UPDATE cuentaxpagar SET estado = 'PAGADO' WHERE id = $id";
+
+	$db = new conexion();
+	$result = $db->consulta($sql);
+
+	$respuesta->datos = [];
+	$respuesta->mensaje = "";
+	$respuesta->codigo = "";
+
+	if ($result) {
+
+		for ($i=0; $i < $num; $i++) {
+			$respuesta->datos[] = mysql_fetch_array($result);
+		}
+
+		$respuesta->mensaje = "Registro generado el pago con éxito!";
+		$respuesta->codigo = 1;
+	} else {
+		$respuesta->mensaje = "Ha ocurrido un error!";
+		$respuesta->codigo = 0;
+	}
+
+	return json_encode($respuesta);
+}
 
 //---- RESERVA ----//
 
@@ -1000,8 +1172,9 @@ function BuscarPreReserva($id) {
 			INNER JOIN usuario ON usuario.id = reserva.usuario_id
 			INNER JOIN persona ON persona.id = usuario.persona_id
 			INNER JOIN area ON reserva.area_id = area.id
-			INNER JOIN inmueble ON usuario.id = inmueble.id WHERE reserva.id = $id";
-
+			INNER JOIN parametro ON area.parametro_id = parametro.id
+			INNER JOIN inmueble ON usuario.id = inmueble.id 
+			WHERE reserva.id = $id";
 	$mensajeError = "No se encontró la reserva!";
 
 	return Consultar($sql, $mensajeError);
@@ -1160,6 +1333,8 @@ function GuardarCabeceraFactura($fecha_factura, $numero_factura, $subtotal, $iva
 	$respuesta->mensaje = "";
 	$respuesta->codigo = "";
 
+	ActualizarCuenta(1, $total, 1);
+	ActualizarCuenta(2, $total, 2);
 	if ($resultNew) {
 
 		for ($i=0; $i < $num; $i++) {
@@ -1238,11 +1413,60 @@ function GuardarAsiento($fecha, $valor, $conceptoPago, $factura_id) {
 	return json_encode($respuesta);
 }
 
+function GuardarAsientoProveedores($fecha, $valor, $conceptoPago, $numero_referencia, 
+									$cuentaxpagar_id) {
+
+$sql = "INSERT INTO asientocontable (descripcion, fecha, numero_referencia, debito, 
+										 credito, diferencia, factura_id, cuentaxpagar_id, 
+										 debitocuenta, creditocuenta) 
+			VALUES ('$conceptoPago', '$fecha', '$numero_referencia', '$valor', '$valor', 
+					'0', NULL, '$cuentaxpagar_id', '3', '2')";
+
+		$db = new conexion();
+	$result = $db->consulta($sql);
+	$num = $db->encontradas($result);
+
+	ActualizarCuenta(1, $valor, 1);
+	ActualizarCuenta(4, $valor, 2);
+
+
+	$respuesta->datos = [];
+	$respuesta->mensaje = "";
+	$respuesta->codigo = "";
+
+	if ($result) {
+
+		for ($i=0; $i < $num; $i++) {
+			$respuesta->datos[] = mysql_fetch_array($result);
+		}
+
+		$respuesta->mensaje = "Registro actualizado!";
+		$respuesta->codigo = 1;
+	} else {
+		$respuesta->mensaje = "Datos inválidos!";
+		$respuesta->codigo = 0;
+	}
+
+	return json_encode($respuesta);
+}
+
+/*
+	$cuenta_id 		id de la cuenta a modificar
+	$valor 			valor a sumar o restar al saldo de la cuenta
+	$operacion		1: resta | 2: suma
+*/
+
+
+function ActualizarCuenta($cuenta_id, $valor, $operacion) {
+
+	$sql = "CALL modificar_cuentas($cuenta_id, $valor, $operacion)";
+
+	$db = new conexion();
+	$result = $db->consulta($sql);
+	$num = $db->encontradas($result);
+}
 // ASIENTOS
-
 function ListaCuentas() {
-
-	//obtiene el id del usuario
 
 	$sql = "SELECT c.descripcion, c.saldo_inicial, c.saldo, tc.descripcion as tipo from cuenta c, tipocuenta tc  where c.tipocuenta_id = tc.id";
 
@@ -1269,9 +1493,60 @@ function ListaCuentas() {
 
 	return json_encode($respuesta);
 }
+
+function ListaCuentasActivo() {
+	$sql = "SELECT * FROM `cuenta` WHERE tipocuenta_id = 1 ";
+	$db = new conexion();
+	$result = $db->consulta($sql);
+	$num = $db->encontradas($result);
+
+	$respuesta->datos = [];
+	$respuesta->mensaje = "";
+	$respuesta->codigo = "";
+
+	if ($num != 0) {
+		for ($i=0; $i < $num; $i++) {
+			$respuesta->datos[] = mysql_fetch_array($result);
+		}
+
+		$respuesta->mensaje = "Ok";
+		$respuesta->codigo = 1;
+	} else {
+		$respuesta->mensaje = "No existen registros de cuentas";
+		$respuesta->codigo = 0;
+	}
+
+	return json_encode($respuesta);
+}
+
+function ListaCuentasPasivo() {
+	$sql = "SELECT * FROM `cuenta` WHERE tipocuenta_id = 2 ";
+	$db = new conexion();
+	$result = $db->consulta($sql);
+	$num = $db->encontradas($result);
+
+	$respuesta->datos = [];
+	$respuesta->mensaje = "";
+	$respuesta->codigo = "";
+
+	if ($num != 0) {
+		for ($i=0; $i < $num; $i++) {
+			$respuesta->datos[] = mysql_fetch_array($result);
+		}
+
+		$respuesta->mensaje = "Ok";
+		$respuesta->codigo = 1;
+	} else {
+		$respuesta->mensaje = "No existen registros de cuentas";
+		$respuesta->codigo = 0;
+	}
+
+	return json_encode($respuesta);
+}
+
+
 function ListaAsientoDebito() {
-	$sql = "SELECT asientocontable.descripcion, asientocontable.fecha, asientocontable.numero_referencia, 
-	asientocontable.debito, asientocontable.factura_id, asientocontable.cuentaxpagar_id, asientocontable.debitocuenta,
+	$sql = "SELECT asientocontable.debito, asientocontable.debitocuenta,
 	cuenta.descripcion AS descripcion_debitocuenta FROM asientocontable 
 	INNER JOIN cuenta ON cuenta.id = asientocontable.debitocuenta";
 
@@ -1300,7 +1575,7 @@ function ListaAsientoDebito() {
 }
 
 function ListaAsientoCredito() {
-	$sql = "SELECT asientocontable.descripcion, asientocontable.numero_referencia, 
+	$sql = "SELECT asientocontable.descripcion, asientocontable.fecha, asientocontable.numero_referencia, 
 	asientocontable.credito, asientocontable.factura_id, asientocontable.cuentaxpagar_id, asientocontable.creditocuenta,
 	cuenta.descripcion AS descripcion_creditocuenta FROM asientocontable 
 	INNER JOIN cuenta ON cuenta.id = asientocontable.creditocuenta";
@@ -1323,6 +1598,37 @@ function ListaAsientoCredito() {
 		$respuesta->codigo = 1;
 	} else {
 		$respuesta->mensaje = "No existen registros de cuentas";
+		$respuesta->codigo = 0;
+	}
+
+	return json_encode($respuesta);
+}
+
+function InsertarAsiento($descripcion, $fecha, $numero_referencia, $debito, $credito, $diferencia, $factura_id, $cuentaxpagar_id, $debitocuenta, $creditocuenta) {
+
+	$sql = "INSERT INTO asientocontable (descripcion, fecha, numero_referencia, debito, credito, diferencia, factura_id, cuentaxpagar_id, debitocuenta, creditocuenta)
+			VALUES ('$descripcion', '$fecha', '$numero_referencia', '$debito', '$credito', '$diferencia', '$factura_id', '$cuentaxpagar_id', '$debitocuenta', '$creditocuenta')";
+
+	$db = new conexion();
+	$result = $db->consulta($sql);
+
+	$respuesta->datos = [];
+	$respuesta->mensaje = "";
+	$respuesta->codigo = "";
+
+	ActualizarCuenta(2, $debitocuenta, 1);
+	ActualizarCuenta(3, $creditocuenta, 2);
+
+	if ($result) {
+
+		for ($i=0; $i < $num; $i++) {
+			$respuesta->datos[] = mysql_fetch_array($result);
+		}
+
+		$respuesta->mensaje = "Registro guardado!";
+		$respuesta->codigo = 1;
+	} else {
+		$respuesta->mensaje = "Datos inválidos!";
 		$respuesta->codigo = 0;
 	}
 
@@ -2255,9 +2561,9 @@ function ListaConceptopagose() {
 
 	return json_encode($respuesta);
 }
-function InsertarConceptopago($descripcion, $estado) {
-	$sql = "INSERT INTO conceptopago (descripcion, estado)
-			VALUES ('$descripcion', '$estado')";
+function InsertarConceptopago($descripcion, $valor, $estado) {
+	$sql = "INSERT INTO conceptopago (descripcion, valor, estado)
+			VALUES ('$descripcion', 'valor', '$estado')";
 
 	$db = new conexion();
 	$result = $db->consulta($sql);
@@ -2334,9 +2640,9 @@ function BuscarConceptopago($id) {
 
 	return json_encode($respuesta);
 }
-function ModificarConceptopago($id, $descripcion, $estado) {
+function ModificarConceptopago($id, $descripcion, $valor, $estado) {
 
-	$sql = "UPDATE conceptopago SET descripcion = '$descripcion', estado = '$estado' WHERE conceptopago.id = $id";
+	$sql = "UPDATE conceptopago SET descripcion = '$descripcion', valor = '$valor', estado = '$estado' WHERE conceptopago.id = $id";
 
 	/*$file = fopen("prourban.log", "a");
 	fwrite($file, $sql);
@@ -2835,6 +3141,321 @@ function ActivarUsuario($id) {
 
 	return json_encode($respuesta);
 }
+
+//Reservas Modulo
+
+function listaReserva(){
+    
+  
+    $sql = "SELECT usuario.id as id, reserva.id as id_reserva , concat(persona.primer_nombre, ' ', persona.primer_apellido) AS nombre,  reserva.fecha_reserva as fechaReserva , reserva.desde as desde , reserva.hasta as hasta , reserva.estado as estado ,area.descripcion as area 
+FROM reserva
+INNER JOIN usuario ON reserva.usuario_id = usuario.id  and reserva.estado = 'Pre-reserva'
+INNER JOIN area ON reserva.area_id = area.id 
+INNER JOIN persona ON usuario.persona_id = persona.id";
+    
+    //SELECT usuario.nombre_usuario  FROM reserva INNER JOIN usuario ON reserva.usuario_id = usuario.id;
+
+	$db = new conexion();
+	$result = $db->consulta($sql);
+	$num = $db->encontradas($result);
+
+	$respuesta->datos = [];
+	$respuesta->mensaje = "";
+	$respuesta->codigo = "";
+
+	if ($num != 0) {
+
+		for ($i=0; $i < $num; $i++) {
+			$respuesta->datos[] = mysql_fetch_array($result);
+		}
+
+		$respuesta->mensaje = "Ok";
+		$respuesta->codigo = 1;
+	} else {
+		$respuesta->mensaje = "No existen registros de reserva!";
+		$respuesta->codigo = 0;
+	}
+
+	return json_encode($respuesta);
+    
+    
+}
+function estadoReserva($id){
+     $sql = "SELECT reserva.id as id, reserva.fecha_reserva as fechareserva,  reserva.desde as desde , reserva.hasta as hasta , reserva.estado as estado ,area.descripcion as area FROM reserva INNER JOIN area ON reserva.area_id = area.id and reserva.estado = 'pre-reserva'  and reserva.usuario_id = '$id'";
+    
+    //SELECT usuario.nombre_usuario  FROM reserva INNER JOIN usuario ON reserva.usuario_id = usuario.id;
+
+	$db = new conexion();
+	$result = $db->consulta($sql);
+	$num = $db->encontradas($result);
+
+	$respuesta->datos = [];
+	$respuesta->mensaje = "";
+	$respuesta->codigo = "";
+
+	if ($num != 0) {
+
+		for ($i=0; $i < $num; $i++) {
+			$respuesta->datos[] = mysql_fetch_array($result);
+		}
+
+		$respuesta->mensaje = "Ok";
+		$respuesta->codigo = 1;
+	} else {
+		$respuesta->mensaje = "No existen registros de reserva!";
+		$respuesta->codigo = 0;
+	}
+
+	return json_encode($respuesta);
+    
+    
+    }
+    
+
+function listaReservaAceptada(){
+    
+  
+    $sql = "SELECT usuario.id as id, reserva.id as id_reserva , concat(persona.primer_nombre, ' ', persona.primer_apellido) AS nombre,  reserva.fecha_reserva as fechaReserva , reserva.desde as desde , reserva.hasta as hasta , reserva.estado as estado ,area.descripcion as area 
+FROM reserva
+INNER JOIN usuario ON reserva.usuario_id = usuario.id  and reserva.estado = 'aceptada'
+INNER JOIN area ON reserva.area_id = area.id 
+INNER JOIN persona ON usuario.persona_id = persona.id";
+    
+
+	$db = new conexion();
+	$result = $db->consulta($sql);
+	$num = $db->encontradas($result);
+
+	$respuesta->datos = [];
+	$respuesta->mensaje = "";
+	$respuesta->codigo = "";
+
+	if ($num != 0) {
+
+		for ($i=0; $i < $num; $i++) {
+			$respuesta->datos[] = mysql_fetch_array($result);
+		}
+
+		$respuesta->mensaje = "Ok";
+		$respuesta->codigo = 1;
+	} else {
+		$respuesta->mensaje = "No existen registros de proveedores!";
+		$respuesta->codigo = 0;
+	}
+
+	return json_encode($respuesta);
+    
+    
+}
+
+
+function listarAreas (){
+    $sql = "SELECT id, descripcion FROM area";
+    $db = new conexion();
+	$result = $db->consulta($sql);
+	$num = $db->encontradas($result);
+
+	$respuesta->datos = [];
+	$respuesta->mensaje = "";
+	$respuesta->codigo = "";
+
+	if ($num != 0) {
+
+		for ($i=0; $i < $num; $i++) {
+			$respuesta->datos[] = mysql_fetch_array($result);
+		}
+
+		$respuesta->mensaje = "Ok";
+		$respuesta->codigo = 1;
+	} else {
+		$respuesta->mensaje = "No existen registros de proveedores!";
+		$respuesta->codigo = 0;
+	}
+
+	return json_encode($respuesta);
+    
+}
+function listarAreasAdmin(){
+    $sql = "SELECT id, descripcion FROM area";
+    $db = new conexion();
+	$result = $db->consulta($sql);
+	$num = $db->encontradas($result);
+
+	$respuesta->datos = [];
+	$respuesta->mensaje = "";
+	$respuesta->codigo = "";
+
+	if ($num != 0) {
+
+		for ($i=0; $i < $num; $i++) {
+			$respuesta->datos[] = mysql_fetch_array($result);
+		}
+
+		$respuesta->mensaje = "Ok";
+		$respuesta->codigo = 1;
+	} else {
+		$respuesta->mensaje = "No existen registros de areas!";
+		$respuesta->codigo = 0;
+	}
+
+	return json_encode($respuesta);
+    
+}
+
+
+
+
+function CancelarPreReserva($id){
+    $sql = "Update reserva Set estado='Libre' Where id='$id' ";
+
+	$db = new conexion();
+	$result = $db->consulta($sql);
+
+	$respuesta->datos = [];
+	$respuesta->mensaje = "";
+	$respuesta->codigo = "";
+
+	if ($result) {
+
+		for ($i=0; $i < $num; $i++) {
+			$respuesta->datos[] = mysql_fetch_array($result);
+		}
+
+		$respuesta->mensaje = "Ok";
+		$respuesta->codigo = 1;
+	} else {
+		$respuesta->mensaje = "Datos inválidos!";
+		$respuesta->codigo = 0;
+	}
+
+	return json_encode($respuesta);
+    
+    
+}
+
+
+/*function insertarReserva($fecha, $desde, $hasta , $estado, $area ) {
+	$sql = "INSERT INTO reserva (fecha_solicitud, start, desde, hasta, estado, usuario_id, area_id) 
+			VALUES (CURDATE(), '$fecha', '$desde' ,'$hasta' ,'$estado' , '1' ,'$area')";*/
+function insertarReserva($fecha, $desde, $hasta , $area, $id ) {
+	$sql = "INSERT INTO reserva (fecha_solicitud, fecha_reserva, desde, hasta, estado, usuario_id, area_id) 
+			VALUES (CURDATE(), '$fecha', '$desde' ,'$hasta' ,'pre-reserva' , '$id' ,'$area')";    
+
+	$db = new conexion();
+	$result = $db->consulta($sql);
+
+	$respuesta->datos = [];
+	$respuesta->mensaje = "";
+	$respuesta->codigo = "";
+
+	if ($result) {
+
+		for ($i=0; $i < $num; $i++) {
+			$respuesta->datos[] = mysql_fetch_array($result);
+		}
+
+		$respuesta->mensaje = "Ok se guardo";
+		$respuesta->codigo = 1;
+	} else {
+		$respuesta->mensaje = "Datos inválidos Reserva!";
+		$respuesta->codigo = 0;
+	}
+
+	return json_encode($respuesta);
+}
+function insertarHoraMantenimiento($fecha_inicio, $fecha_fin, $desde, $hasta , $area ) {
+	$sql = "INSERT INTO horariomantenimiento (fecha_inicio, fecha_fin, desde, hasta,  area_id) VALUES ('$fecha_inicio', '$fecha_fin', '$desde' ,'$hasta' , '$area')";
+
+	$db = new conexion();
+	$result = $db->consulta($sql);
+
+	$respuesta->datos = [];
+	$respuesta->mensaje = "";
+	$respuesta->codigo = "";
+
+	if ($result) {
+
+		for ($i=0; $i < $num; $i++) {
+			$respuesta->datos[] = mysql_fetch_array($result);
+		}
+
+		$respuesta->mensaje = "Ok";
+		$respuesta->codigo = 1;
+	} else {
+		$respuesta->mensaje = "Datos inválidos!";
+		$respuesta->codigo = 0;
+	}
+
+	return json_encode($respuesta);
+}
+
+function eliminacionAutomatica($valor){
+   /* CREATE EVENT limpieza
+    ON SCHEDULE AT CURRENT_TIMESTAMP + INTERVAL 1 DAY
+    DO
+      TRUNCATE TABLE esquema.tabla;*/
+   // $sql = "CREATE EVENT limpieza ON SCHEDULE AT CURRENT_TIMESTAMP + INTERVAL 24 HOUR  DO DELETE FROM  reserva where estado = 'pre-reserva'";
+           $sql =   "ALTER EVENT limpieza ON SCHEDULE EVERY '$valor' HOUR";
+    
+    
+
+	$db = new conexion();
+	$result = $db->consulta($sql);
+
+	$respuesta->datos = [];
+	$respuesta->mensaje = "";
+	$respuesta->codigo = "";
+
+	if ($result) {
+
+		for ($i=0; $i < $num; $i++) {
+			$respuesta->datos[] = mysql_fetch_array($result);
+		}
+
+		$respuesta->mensaje = "Ok grabo";
+		$respuesta->codigo = 1;
+	} else {
+		$respuesta->mensaje = "Datos inválidos!";
+		$respuesta->codigo = 0;
+	}
+
+	return json_encode($respuesta);
+}
+
+function guardarHora($valor){
+   /* $sql = "INSERT INTO impuesto (descripcion, valor) 
+			VALUES ('tiempo', '$valor')";*/
+    $sql = " UPDATE parametro
+SET valor='$valor'
+WHERE descripcion='Reserva'";
+   
+
+	$db = new conexion();
+	$result = $db->consulta($sql);
+
+	$respuesta->datos = [];
+	$respuesta->mensaje = "";
+	$respuesta->codigo = "";
+
+	if ($result) {
+
+		for ($i=0; $i < $num; $i++) {
+			$respuesta->datos[] = mysql_fetch_array($result);
+		}
+
+		$respuesta->mensaje = "Ok";
+		$respuesta->codigo = 1;
+	} else {
+		$respuesta->mensaje = "Datos inválidos!";
+		$respuesta->codigo = 0;
+	}
+
+	return json_encode($respuesta);
+}
+
+
+
+/***********************************  Fin Funciones Reserva **********************************/
 
 
 ?>
