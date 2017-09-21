@@ -640,7 +640,36 @@ function Autenticacion($usuario, $clave) {
 function ListaProveedores() {
 
 	//obtiene el id del usuario
-	$sql = "SELECT * FROM proveedor";
+	$sql = "SELECT * FROM proveedor WHERE estado = 'ACTIVO'";
+$db = new conexion();
+	$result = $db->consulta($sql);
+	$num = $db->encontradas($result);
+
+	$respuesta->datos = [];
+	$respuesta->mensaje = "";
+	$respuesta->codigo = "";
+
+	if ($num != 0) {
+
+		for ($i=0; $i < $num; $i++) {
+			$respuesta->datos[] = mysql_fetch_array($result);
+		}
+
+		$respuesta->mensaje = "Ok";
+		$respuesta->codigo = 1;
+	} else {
+		$respuesta->mensaje = "No existen registros de proveedores!";
+		$respuesta->codigo = 0;
+	}
+
+	return json_encode($respuesta);
+}
+
+//	Devuelve lista de proveedores con estado INACTIVO
+function ListaProveedoresInactivos() {
+
+	//obtiene el id del usuario
+	$sql = "SELECT * FROM proveedor WHERE estado = 'INACTIVO'";
 
 	$db = new conexion();
 	$result = $db->consulta($sql);
@@ -750,7 +779,8 @@ function ModificarProveedor($id, $descripcion, $ruc) {
 }
 
 function EliminarProveedor($id) {
-	$sql = "DELETE FROM proveedor WHERE id=$id";
+	$sql = "UPDATE proveedor SET estado = 'INACTIVO' 
+			WHERE id = $id";
 
 	$db = new conexion();
 	$result = $db->consulta($sql);
@@ -769,6 +799,34 @@ function EliminarProveedor($id) {
 		$respuesta->codigo = 1;
 	} else {
 		$respuesta->mensaje = "Ha ocurrido un error!";
+ 		$respuesta->codigo = 0;
+	}
+
+	return json_encode($respuesta);
+}
+
+function ActivarProveedor($id) {
+
+	$sql = "UPDATE proveedor SET estado = 'ACTIVO' 
+			WHERE id = $id";
+
+	$db = new conexion();
+	$result = $db->consulta($sql);
+
+	$respuesta->datos = [];
+	$respuesta->mensaje = "";
+	$respuesta->codigo = "";
+
+	if ($result) {
+
+		for ($i=0; $i < $num; $i++) {
+			$respuesta->datos[] = mysql_fetch_array($result);
+		}
+
+		$respuesta->mensaje = "Registro activado!";
+		$respuesta->codigo = 1;
+	} else {
+		$respuesta->mensaje = "Datos invalidos!";
 		$respuesta->codigo = 0;
 	}
 
@@ -848,13 +906,39 @@ function BuscarCuentaxcobrar($id) {
 //---- CUENTAXPAGAR ----//
 
 function ListaCuentasxpagar() {
+$sql = "SELECT a.id, a.descripcion, a.fecha, a.total, b.descripcion AS nombre_proveedor 
+			FROM cuentaxpagar a 
+			INNER JOIN proveedor b ON a.proveedor_id = b.id
+			WHERE a.estado = 'ACTIVO'";
 
+	$db = new conexion();
+	$result = $db->consulta($sql);
+	$num = $db->encontradas($result);
+
+	$respuesta->datos = [];
+	$respuesta->mensaje = "";
+	$respuesta->codigo = "";
+	if ($num != 0) {
+		for ($i=0; $i < $num; $i++) {
+			$respuesta->datos[] = mysql_fetch_array($result);
+		}
+
+		$respuesta->mensaje = "Ok";
+		$respuesta->codigo = 1;
+	} else {
+		$respuesta->mensaje = "No existen registros de cuentas por pagar!";
+		$respuesta->codigo = 0;
+	}
+
+	return json_encode($respuesta);
+}
+function ListaCuentasxpagarInactivas() {
 	//obtiene el id del usuario
 
 	$sql = "SELECT a.id, a.descripcion, a.fecha, a.total, b.descripcion AS nombre_proveedor
 			FROM cuentaxpagar a
 			INNER JOIN proveedor b ON a.proveedor_id = b.id
-			WHERE a.estado = 'ACTIVO'";
+			WHERE a.estado = 'INACTIVO'";
 
 
 	$db = new conexion();
@@ -993,6 +1077,32 @@ function EliminarCuentaxpagar($id) {
 	return json_encode($respuesta);
 }
 
+function ActivarCuentaxpagar($id) {
+	$sql = "UPDATE cuentaxpagar SET estado = 'ACTIVO' WHERE id = $id";
+
+	$db = new conexion();
+	$result = $db->consulta($sql);
+
+	$respuesta->datos = [];
+	$respuesta->mensaje = "";
+	$respuesta->codigo = "";
+
+	if ($result) {
+
+		for ($i=0; $i < $num; $i++) {
+			$respuesta->datos[] = mysql_fetch_array($result);
+		}
+
+		$respuesta->mensaje = "Registro activado con éxito!";
+		$respuesta->codigo = 1;
+	} else {
+		$respuesta->mensaje = "Ha ocurrido un error!";
+		$respuesta->codigo = 0;
+	}
+
+	return json_encode($respuesta);
+}
+
 
 //---- RESERVA ----//
 
@@ -1036,8 +1146,9 @@ function BuscarPreReserva($id) {
 			INNER JOIN usuario ON usuario.id = reserva.usuario_id
 			INNER JOIN persona ON persona.id = usuario.persona_id
 			INNER JOIN area ON reserva.area_id = area.id
-			INNER JOIN inmueble ON usuario.id = inmueble.id WHERE reserva.id = $id";
-
+			INNER JOIN parametro ON area.parametro_id = parametro.id
+			INNER JOIN inmueble ON usuario.id = inmueble.id 
+			WHERE reserva.id = $id";
 	$mensajeError = "No se encontró la reserva!";
 
 	return Consultar($sql, $mensajeError);
@@ -1196,6 +1307,8 @@ function GuardarCabeceraFactura($fecha_factura, $numero_factura, $subtotal, $iva
 	$respuesta->mensaje = "";
 	$respuesta->codigo = "";
 
+	ActualizarCuenta(1, $total, 1);
+	ActualizarCuenta(2, $total, 2);
 	if ($resultNew) {
 
 		for ($i=0; $i < $num; $i++) {
@@ -1276,9 +1389,15 @@ function GuardarAsiento($fecha, $valor, $conceptoPago, $factura_id) {
 
 // ASIENTOS
 
-function ListaCuentas() {
+function ActualizarCuenta($cuenta_id, $valor, $operacion) {
 
-	//obtiene el id del usuario
+	$sql = "CALL modificar_cuentas($cuenta_id, $valor, $operacion)";
+
+	$db = new conexion();
+	$result = $db->consulta($sql);
+	$num = $db->encontradas($result);
+}
+function ListaCuentas() {
 
 	$sql = "SELECT c.descripcion, c.saldo_inicial, c.saldo, tc.descripcion as tipo from cuenta c, tipocuenta tc  where c.tipocuenta_id = tc.id";
 
@@ -1305,9 +1424,87 @@ function ListaCuentas() {
 
 	return json_encode($respuesta);
 }
+
+function ListaCuentasActivo() {
+	$sql = "SELECT * FROM `cuenta` WHERE tipocuenta_id = 1 ";
+	$db = new conexion();
+	$result = $db->consulta($sql);
+	$num = $db->encontradas($result);
+
+	$respuesta->datos = [];
+	$respuesta->mensaje = "";
+	$respuesta->codigo = "";
+
+	if ($num != 0) {
+		for ($i=0; $i < $num; $i++) {
+			$respuesta->datos[] = mysql_fetch_array($result);
+		}
+
+		$respuesta->mensaje = "Ok";
+		$respuesta->codigo = 1;
+	} else {
+		$respuesta->mensaje = "No existen registros de cuentas";
+		$respuesta->codigo = 0;
+	}
+
+	return json_encode($respuesta);
+}
+
+function ListaCuentasPasivo() {
+	$sql = "SELECT * FROM `cuenta` WHERE tipocuenta_id = 2 ";
+	$db = new conexion();
+	$result = $db->consulta($sql);
+	$num = $db->encontradas($result);
+
+	$respuesta->datos = [];
+	$respuesta->mensaje = "";
+	$respuesta->codigo = "";
+
+	if ($num != 0) {
+		for ($i=0; $i < $num; $i++) {
+			$respuesta->datos[] = mysql_fetch_array($result);
+		}
+
+		$respuesta->mensaje = "Ok";
+		$respuesta->codigo = 1;
+	} else {
+		$respuesta->mensaje = "No existen registros de cuentas";
+		$respuesta->codigo = 0;
+	}
+
+	return json_encode($respuesta);
+}
+
+function ModificarCuenta($id, $codigo, $descripcion, $saldo_inicial, $saldo, $tipocuenta_id) {
+
+	$sql = "UPDATE cuenta SET codigo = '$codigo', descripcion = '$descripcion', saldo_inicial = '$saldo_inicial', saldo = '$saldo',
+				tipocuenta_id = '$tipocuenta_id'
+			WHERE cuenta.id = $id" ;
+
+	$db = new conexion();
+	$result = $db->consulta($sql);
+
+	$respuesta->datos = [];
+	$respuesta->mensaje = "";
+	$respuesta->codigo = "";
+
+	if ($result) {
+
+		for ($i=0; $i < $num; $i++) {
+			$respuesta->datos[] = mysql_fetch_array($result);
+		}
+
+		$respuesta->mensaje = "Registro actualizado!";
+		$respuesta->codigo = 1;
+	} else {
+		$respuesta->mensaje = "Datos inválidos!";
+		$respuesta->codigo = 0;
+	}
+
+	return json_encode($respuesta);
+}
 function ListaAsientoDebito() {
-	$sql = "SELECT asientocontable.descripcion, asientocontable.fecha, asientocontable.numero_referencia, 
-	asientocontable.debito, asientocontable.factura_id, asientocontable.cuentaxpagar_id, asientocontable.debitocuenta,
+	$sql = "SELECT asientocontable.debito, asientocontable.debitocuenta,
 	cuenta.descripcion AS descripcion_debitocuenta FROM asientocontable 
 	INNER JOIN cuenta ON cuenta.id = asientocontable.debitocuenta";
 
@@ -1336,7 +1533,7 @@ function ListaAsientoDebito() {
 }
 
 function ListaAsientoCredito() {
-	$sql = "SELECT asientocontable.descripcion, asientocontable.numero_referencia, 
+	$sql = "SELECT asientocontable.descripcion, asientocontable.fecha, asientocontable.numero_referencia, 
 	asientocontable.credito, asientocontable.factura_id, asientocontable.cuentaxpagar_id, asientocontable.creditocuenta,
 	cuenta.descripcion AS descripcion_creditocuenta FROM asientocontable 
 	INNER JOIN cuenta ON cuenta.id = asientocontable.creditocuenta";
@@ -1359,6 +1556,37 @@ function ListaAsientoCredito() {
 		$respuesta->codigo = 1;
 	} else {
 		$respuesta->mensaje = "No existen registros de cuentas";
+		$respuesta->codigo = 0;
+	}
+
+	return json_encode($respuesta);
+}
+
+function InsertarAsiento($descripcion, $fecha, $numero_referencia, $debito, $credito, $diferencia, $factura_id, $cuentaxpagar_id, $debitocuenta, $creditocuenta) {
+
+	$sql = "INSERT INTO asientocontable (descripcion, fecha, numero_referencia, debito, credito, diferencia, factura_id, cuentaxpagar_id, debitocuenta, creditocuenta)
+			VALUES ('$descripcion', '$fecha', '$numero_referencia', '$debito', '$credito', '$diferencia', '$factura_id', '$cuentaxpagar_id', '$debitocuenta', '$creditocuenta')";
+
+	$db = new conexion();
+	$result = $db->consulta($sql);
+
+	$respuesta->datos = [];
+	$respuesta->mensaje = "";
+	$respuesta->codigo = "";
+
+	ActualizarCuenta(2, $debitocuenta, 1);
+	ActualizarCuenta(3, $creditocuenta, 2);
+
+	if ($result) {
+
+		for ($i=0; $i < $num; $i++) {
+			$respuesta->datos[] = mysql_fetch_array($result);
+		}
+
+		$respuesta->mensaje = "Registro guardado!";
+		$respuesta->codigo = 1;
+	} else {
+		$respuesta->mensaje = "Datos inválidos!";
 		$respuesta->codigo = 0;
 	}
 

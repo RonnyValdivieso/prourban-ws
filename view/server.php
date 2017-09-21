@@ -15,14 +15,9 @@ $ns = $_SERVER["DOCUMENT_ROOT"] . "/prourban-ws/view/server.php";
 $server->configurewsdl('ProurbanWSDL', $ns);
 
 //Seguridad---------------------------------------------
-
-//	Obtiene un usuario
 $server->register("Autenticacion",
 array('usuario' => 'xsd:string', 'clave' => 'xsd:string'),
 array('respuesta' => 'xsd:string'), $ns);
-
-//	Lista de usuarios recibe usuario y contraseña para validar logueo
-
 //	Lista de opciones
 $server->register("ListaOpciones",
 array('rol_id' => 'xsd:string'),
@@ -103,10 +98,17 @@ array(),
 array('respuesta' => 'xsd:string'), $ns);
 
 //Seguridad---------------------------------------------
+$server->register("CargaMenu",
+			array('usuario_id' => 'xsd:string'),
+			array('respuesta' => 'xsd:string'), $ns);
 
 
 //	PROVEEDOR
 $server->register("ListaProveedores",
+			array(),
+			array('respuesta' => 'xsd:string'), $ns);
+
+$server->register("ListaProveedoresInactivos",
 			array(),
 			array('respuesta' => 'xsd:string'), $ns);
 
@@ -126,9 +128,16 @@ $server->register("BuscarProveedor",
 			array('id' => 'xsd:string'),
 			array('respuesta' => 'xsd:string'), $ns);
 
+$server->register("ActivarProveedor",
+			array('id' => 'xsd:string'),
+			array('respuesta' => 'xsd:string'), $ns);
 
 //	CUENTAXPAGAR
 $server->register("ListaCuentasxpagar",
+			array(),
+			array('respuesta' => 'xsd:string'), $ns);
+
+$server->register("ListaCuentasxpagarInactivas",
 			array(),
 			array('respuesta' => 'xsd:string'), $ns);
 
@@ -149,6 +158,10 @@ $server->register("ModificarCuentaxpagar",
 			array('respuesta' => 'xsd:string'), $ns);
 
 $server->register("EliminarCuentaxpagar",
+			array('id' => 'xsd:string'),
+			array('respuesta' => 'xsd:string'), $ns);
+
+$server->register("ActivarCuentaxpagar",
 			array('id' => 'xsd:string'),
 			array('respuesta' => 'xsd:string'), $ns);
 
@@ -214,12 +227,34 @@ $server->register("ListaCuentas",
 			array(),
 			array('respuesta' => 'xsd:string'), $ns);
 
+$server->register("ListaCuentasActivo",
+			array(),
+			array('respuesta' => 'xsd:string'), $ns);
+
+$server->register("ListaCuentasPasivo",
+			array(),
+			array('respuesta' => 'xsd:string'), $ns);
+
+$server->register("ModificarCuenta",
+			array('id' => 'xsd:string', 'codigo' => 'xsd:string', 
+				'descripcion' => 'xsd:string', 'saldo_inicial' => 'xsd:string', 
+				'saldo' => 'xsd:string', 'tipocuenta_id' => 'xsd:string'),
+			array('respuesta' => 'xsd:string'), $ns);
+
 $server->register("ListaAsientoDebito",
 			array(),
 			array('respuesta' => 'xsd:string'), $ns);
 
 $server->register("ListaAsientoCredito",
 			array(),
+			array('respuesta' => 'xsd:string'), $ns);
+
+$server->register("InsertarAsiento",
+			array('descripcion' => 'xsd:string', 'fecha' => 'xsd:string',
+				  'numero_referencia' => 'xsd:string', 'debito' => 'xsd:string', 
+				  'credito' => 'xsd:string', 'difernecia' => 'xsd:string',
+				  'factura_id' => 'xsd:string', 'cuentaxpaga_id' => 'xsd:string',
+					'debitocuenta' => 'xsd:string', 'creditocuenta' => 'xsd:string',),
 			array('respuesta' => 'xsd:string'), $ns);
 
 //Andres
