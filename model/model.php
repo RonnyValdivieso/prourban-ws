@@ -799,6 +799,34 @@ function EliminarProveedor($id) {
 		$respuesta->codigo = 1;
 	} else {
 		$respuesta->mensaje = "Ha ocurrido un error!";
+		$respuesta->codigo = 0;
+	}
+
+	return json_encode($respuesta);
+}
+
+function BuscarProveedor($id) {
+
+	$sql = "SELECT * FROM proveedor WHERE id = $id";
+
+	$db = new conexion();
+	$result = $db->consulta($sql);
+	$num = $db->encontradas($result);
+
+	$respuesta->datos = [];
+	$respuesta->mensaje = "";
+	$respuesta->codigo = "";
+
+	if ($num != 0) {
+
+		for ($i=0; $i < $num; $i++) {
+			$respuesta->datos[] = mysql_fetch_array($result);
+		}
+
+		$respuesta->mensaje = "Ok";
+		$respuesta->codigo = 1;
+	} else {
+		$respuesta->mensaje = "Ha ocurrido un error!";
  		$respuesta->codigo = 0;
 	}
 
@@ -906,10 +934,10 @@ function BuscarCuentaxcobrar($id) {
 //---- CUENTAXPAGAR ----//
 
 function ListaCuentasxpagar() {
-$sql = "SELECT a.id, a.descripcion, a.fecha, a.total, b.descripcion AS nombre_proveedor 
+	$sql = "SELECT a.id, a.descripcion, a.fecha, a.total, a.numero_referencia, b.descripcion AS nombre_proveedor 
 			FROM cuentaxpagar a 
 			INNER JOIN proveedor b ON a.proveedor_id = b.id
-			WHERE a.estado = 'ACTIVO'";
+			WHERE a.estado = 'PENDIENTE'";
 
 	$db = new conexion();
 	$result = $db->consulta($sql);
@@ -938,7 +966,7 @@ function ListaCuentasxpagarInactivas() {
 	$sql = "SELECT a.id, a.descripcion, a.fecha, a.total, b.descripcion AS nombre_proveedor
 			FROM cuentaxpagar a
 			INNER JOIN proveedor b ON a.proveedor_id = b.id
-			WHERE a.estado = 'INACTIVO'";
+			WHERE a.estado = 'PAGADO'";
 
 
 	$db = new conexion();
@@ -994,11 +1022,11 @@ function BuscarCuentaxpagar($id) {
 	return json_encode($respuesta);
 }
 
-function ModificarCuentaxpagar($id, $descripcion, $fecha, $total, $numero_referencia, $proveedor_id) {
+function InsertarCuentaxpagar($descripcion, $fecha, $total, $numero_referencia, $proveedor_id) {
 
-	$sql = "UPDATE cuentaxpagar SET descripcion = '$descripcion', fecha = '$fecha', total = '$total',
-				numero_referencia = '$numero_referencia', proveedor_id = '$proveedor_id'
-			WHERE cuentaxpagar.id = $id";
+	$sql = "INSERT INTO cuentaxpagar (descripcion, fecha, total, numero_referencia, proveedor_id)
+			VALUES ('$descripcion', '$fecha', '$total', '$numero_referencia', '$proveedor_id')";
+
 
 	$db = new conexion();
 	$result = $db->consulta($sql);
@@ -1023,10 +1051,11 @@ function ModificarCuentaxpagar($id, $descripcion, $fecha, $total, $numero_refere
 	return json_encode($respuesta);
 }
 
-function InsertarCuentaxpagar($descripcion, $fecha, $total, $numero_referencia, $proveedor_id) {
+function ModificarCuentaxpagar($id, $descripcion, $fecha, $total, $numero_referencia, $proveedor_id) {
 
-	$sql = "INSERT INTO cuentaxpagar (descripcion, fecha, total, numero_referencia, proveedor_id)
-			VALUES ('$descripcion', '$fecha', '$total', '$numero_referencia', '$proveedor_id')";
+	$sql = "UPDATE cuentaxpagar SET descripcion = '$descripcion', fecha = '$fecha', total = '$total',
+				numero_referencia = '$numero_referencia', proveedor_id = '$proveedor_id'
+			WHERE cuentaxpagar.id = $id";
 
 	$db = new conexion();
 	$result = $db->consulta($sql);
@@ -1103,6 +1132,32 @@ function ActivarCuentaxpagar($id) {
 	return json_encode($respuesta);
 }
 
+function PagarCuenta($id) {
+
+	$sql = "UPDATE cuentaxpagar SET estado = 'PAGADO' WHERE id = $id";
+
+	$db = new conexion();
+	$result = $db->consulta($sql);
+
+	$respuesta->datos = [];
+	$respuesta->mensaje = "";
+	$respuesta->codigo = "";
+
+	if ($result) {
+
+		for ($i=0; $i < $num; $i++) {
+			$respuesta->datos[] = mysql_fetch_array($result);
+		}
+
+		$respuesta->mensaje = "Registro generado el pago con éxito!";
+		$respuesta->codigo = 1;
+	} else {
+		$respuesta->mensaje = "Ha ocurrido un error!";
+		$respuesta->codigo = 0;
+	}
+
+	return json_encode($respuesta);
+}
 
 //---- RESERVA ----//
 
@@ -1387,7 +1442,49 @@ function GuardarAsiento($fecha, $valor, $conceptoPago, $factura_id) {
 	return json_encode($respuesta);
 }
 
-// ASIENTOS
+function GuardarAsientoProveedores($fecha, $valor, $conceptoPago, $numero_referencia, 
+									$cuentaxpagar_id) {
+
+$sql = "INSERT INTO asientocontable (descripcion, fecha, numero_referencia, debito, 
+										 credito, diferencia, factura_id, cuentaxpagar_id, 
+										 debitocuenta, creditocuenta) 
+			VALUES ('$conceptoPago', '$fecha', '$numero_referencia', '$valor', '$valor', 
+					'0', NULL, '$cuentaxpagar_id', '3', '2')";
+
+		$db = new conexion();
+	$result = $db->consulta($sql);
+	$num = $db->encontradas($result);
+
+	ActualizarCuenta(1, $valor, 1);
+	ActualizarCuenta(3, $valor, 2);
+
+
+	$respuesta->datos = [];
+	$respuesta->mensaje = "";
+	$respuesta->codigo = "";
+
+	if ($result) {
+
+		for ($i=0; $i < $num; $i++) {
+			$respuesta->datos[] = mysql_fetch_array($result);
+		}
+
+		$respuesta->mensaje = "Registro actualizado!";
+		$respuesta->codigo = 1;
+	} else {
+		$respuesta->mensaje = "Datos inválidos!";
+		$respuesta->codigo = 0;
+	}
+
+	return json_encode($respuesta);
+}
+
+/*
+	$cuenta_id 		id de la cuenta a modificar
+	$valor 			valor a sumar o restar al saldo de la cuenta
+	$operacion		1: resta | 2: suma
+*/
+
 
 function ActualizarCuenta($cuenta_id, $valor, $operacion) {
 
@@ -1397,6 +1494,7 @@ function ActualizarCuenta($cuenta_id, $valor, $operacion) {
 	$result = $db->consulta($sql);
 	$num = $db->encontradas($result);
 }
+// ASIENTOS
 function ListaCuentas() {
 
 	$sql = "SELECT c.descripcion, c.saldo_inicial, c.saldo, tc.descripcion as tipo from cuenta c, tipocuenta tc  where c.tipocuenta_id = tc.id";
@@ -1475,34 +1573,7 @@ function ListaCuentasPasivo() {
 	return json_encode($respuesta);
 }
 
-function ModificarCuenta($id, $codigo, $descripcion, $saldo_inicial, $saldo, $tipocuenta_id) {
 
-	$sql = "UPDATE cuenta SET codigo = '$codigo', descripcion = '$descripcion', saldo_inicial = '$saldo_inicial', saldo = '$saldo',
-				tipocuenta_id = '$tipocuenta_id'
-			WHERE cuenta.id = $id" ;
-
-	$db = new conexion();
-	$result = $db->consulta($sql);
-
-	$respuesta->datos = [];
-	$respuesta->mensaje = "";
-	$respuesta->codigo = "";
-
-	if ($result) {
-
-		for ($i=0; $i < $num; $i++) {
-			$respuesta->datos[] = mysql_fetch_array($result);
-		}
-
-		$respuesta->mensaje = "Registro actualizado!";
-		$respuesta->codigo = 1;
-	} else {
-		$respuesta->mensaje = "Datos inválidos!";
-		$respuesta->codigo = 0;
-	}
-
-	return json_encode($respuesta);
-}
 function ListaAsientoDebito() {
 	$sql = "SELECT asientocontable.debito, asientocontable.debitocuenta,
 	cuenta.descripcion AS descripcion_debitocuenta FROM asientocontable 

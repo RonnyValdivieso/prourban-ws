@@ -165,6 +165,10 @@ $server->register("ActivarCuentaxpagar",
 			array('id' => 'xsd:string'),
 			array('respuesta' => 'xsd:string'), $ns);
 
+$server->register("PagarCuenta",
+			array('id' => 'xsd:string'),
+			array('respuesta' => 'xsd:string'), $ns);
+
 
 //	CUENTAXCOBRAR
 $server->register("ListaCuentaxcobrar",
@@ -209,6 +213,9 @@ $server->register("GuardarAsiento",
 			array('fecha' => 'xsd:string', 'valor' => 'xsd:string', 'conceptoPago' => 'xsd:string', 'factura_id' => 'xsd:string'),
 			array('respuesta' => 'xsd:string'), $ns);
 
+$server->register("GuardarAsientoProveedores",
+			array('fecha' => 'xsd:string', 'valor' => 'xsd:string', 'conceptoPago' => 'xsd:string', 'numero_referencia' => 'xsd:string', 'cuentaxpagar_id' => 'xsd:string'),
+			array('respuesta' => 'xsd:string'), $ns);
 //	RESERVA
 $server->register("ListaPreReservas",
 			array(),
@@ -234,13 +241,6 @@ $server->register("ListaCuentasActivo",
 $server->register("ListaCuentasPasivo",
 			array(),
 			array('respuesta' => 'xsd:string'), $ns);
-
-$server->register("ModificarCuenta",
-			array('id' => 'xsd:string', 'codigo' => 'xsd:string', 
-				'descripcion' => 'xsd:string', 'saldo_inicial' => 'xsd:string', 
-				'saldo' => 'xsd:string', 'tipocuenta_id' => 'xsd:string'),
-			array('respuesta' => 'xsd:string'), $ns);
-
 $server->register("ListaAsientoDebito",
 			array(),
 			array('respuesta' => 'xsd:string'), $ns);
