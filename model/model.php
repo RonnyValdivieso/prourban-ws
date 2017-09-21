@@ -1842,7 +1842,7 @@ function CambiarEstadoArea($id) {
 function ListaInmuebles() {
 
 	//obtiene el id del usuario
-	$sql = "SELECT * FROM `inmueble` ";
+	$sql = "SELECT inmueble.manzana, inmueble.numero_villa, inmueble.numero_pisos, inmueble.numero_cuartos, inmueble.numero_banios, inmueble.usuario_id, usuario.nombre_usuario FROM inmueble INNER JOIN usuario on inmueble.usuario_id = usuario.id";
     //$sql = "SELECT * FROM `inmueble` WHERE inmueble.estado = 'Activo'";
 
 	$db = new conexion();
