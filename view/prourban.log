@@ -1,0 +1,8 @@
+UPDATE reserva SET estado = 'PAGADO'
+			WHERE id = 3UPDATE reserva SET estado = 'PAGADO'
+			WHERE id = 1UPDATE reserva SET estado = 'PAGADO'
+			WHERE id = 1UPDATE reserva SET estado = 'PAGADO'
+			WHERE id = 1UPDATE reserva SET estado = 'PAGADO'
+			WHERE id = 1UPDATE reserva SET estado = 'PAGADO'
+			WHERE id = 1UPDATE reserva SET estado = 'PAGADO'
+			WHERE id = 1

@@ -3113,20 +3113,61 @@ function BuscarPreReserva($id) {
 			INNER JOIN parametro ON area.parametro_id = parametro.id
 			INNER JOIN inmueble ON usuario.id = inmueble.id 
 			WHERE reserva.id = $id";
-	$mensajeError = "No se encontró la reserva!";
 
-	return Consultar($sql, $mensajeError);
+	$db = new conexion();
+	$result = $db->consulta($sql);
+	$num = $db->encontradas($result);
+
+	$respuesta->datos = [];
+	$respuesta->mensaje = "";
+	$respuesta->codigo = "";
+
+	if ($num != 0) {
+
+		for ($i=0; $i < $num; $i++) {
+			$respuesta->datos[] = mysql_fetch_array($result);
+		}
+
+		$respuesta->mensaje = "Ok";
+		$respuesta->codigo = 1;
+	} else {
+		$respuesta->mensaje = "No se encontró la reserva!";
+		$respuesta->codigo = 0;
+	}
+
+	return json_encode($respuesta);
 }
 
 function PagarReserva($id) {
-	$sql = "UPDATE reserva SET estado = 'RESERVADO'
+	$sql = "UPDATE reserva SET estado = 'PAGADO'
 			WHERE id = $id";
 
-	$mensajeError = "No se ha podido realizar el pago de la reserva";
+			$fi = fopen("prourban.log", "a");
+	fwrite($fi, $sql);
+	fclose($fi);
 
-	$result = Procesar($sql, $mensajeError);
+	$db = new conexion();
+	$result = $db->consulta($sql);
+	$num = $db->encontradas($result);
 
-	return $result;
+	$respuesta->datos = [];
+	$respuesta->mensaje = "";
+	$respuesta->codigo = "";
+
+	if ($result) {
+
+		for ($i=0; $i < $num; $i++) {
+			$respuesta->datos[] = mysql_fetch_array($result);
+		}
+
+		$respuesta->mensaje = "Ok";
+		$respuesta->codigo = 1;
+	} else {
+		$respuesta->mensaje = "No se ha podido realizar el pago de la reserva";
+		$respuesta->codigo = 0;
+	}
+
+	return json_encode($respuesta);
 }
 
 
