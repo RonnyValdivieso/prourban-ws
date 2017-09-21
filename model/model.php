@@ -3063,14 +3063,16 @@ function BuscarUsuario($id) {
 }
 function ModificarUsuario($id, $cedula, $primer_nombre, $segundo_nombre, $primer_apellido, $segundo_apellido, $telefono, $correo, $nombre_usuario, $clave) {
 
-	$sql = "UPDATE persona SET cedula = '$cedula', primer_nombre = '$primer_nombre', segundo_nombre = '$segundo_nombre', primer_apellido = '$primer_apellido', segundo_apellido = '$segundo_apellido', telefono = '$telefono', correo = '$correo', estado = '$estado', WHERE persona.id = $id";
+	$sql2 =  "UPDATE `usuario` SET `nombre_usuario`= '$nombre_usuario',`clave`= '$clave' WHERE `id` = '$id'";
 
-	/*$file = fopen("prourban.log", "a");
-	fwrite($file, $sql);
-	fclose($file);*/
+
+	$sql = "UPDATE `persona` SET `cedula`= '$id',`primer_nombre`= '$primer_nombre',`segundo_nombre`= '$segundo_nombre',`primer_apellido`= '$primer_apellido',`segundo_apellido`= '$segundo_apellido',`telefono`= '$telefono',`correo`= '$correo' WHERE `id` =  (SELECT `persona_id` FROM `usuario` WHERE `id` = '$id' )";
 
 	$db = new conexion();
+
 	$result = $db->consulta($sql);
+	$result2 = $db->consulta($sql2);
+
     $num = $db->encontradas($result);
 
 	$respuesta->datos = [];
